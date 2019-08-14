@@ -19,7 +19,7 @@ class brain:
         self.discount_factor = 0.9
         self.rand_thresh = 5
         self.memory = []
-        self.mini_batch_size = 250
+        self.mini_batch_size = 100
         self.learning_rate = 0.0006
 
         self.model = self.create_model(w, h)
@@ -66,9 +66,8 @@ class brain:
         actual_q[0][action] = reward
         self.model.fit(state_a, actual_q, epochs=5, verbose=v_opt)
 
-    def short_memory_training(self, state_a, action, reward, state_b, ended):
-        if (reward > 0):
-            print("reward found!")
+    def short_memory_training(self, state_a, action, reward, state_b, ended, force = False):
+        if reward > 0 or force:
             self.train(state_a, action, reward, state_b, ended)
 
     def long_memory_training(self):

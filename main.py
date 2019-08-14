@@ -101,6 +101,7 @@ def main():
 
         if ended:
             game.reset(5)
+            game_brain.short_memory_training(state_a, action, reward, state_b, ended, True)
             game_brain.long_memory_training()
             game_brain.save()
 
