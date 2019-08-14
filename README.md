@@ -19,7 +19,7 @@ Two convolutional layers, one fully connected, and one dropout to help against o
 
 Replay Training
 ==============
-Two training triggers
+Two training triggers. Aim to train only events that are significant
 
 1. End of each game round, randomly select a mini batch of state transition memories (old_state, action, new_state, reward) to train the network
-2. Train the state transition whenever the agent recieves a reward
+2. Train the state transition whenever the agent dies or recieves a reward
