@@ -19,9 +19,11 @@ class brain:
         self.reward_multi = 5
         self.discount_factor = 0.9
         self.rand_thresh = 5
-        self.model = self.create_model(w, h)
         self.memory = []
         self.mini_batch_size = 50
+        self.learning_rate = 0.0007
+
+        self.model = self.create_model(w, h)
 
     def create_model(self, w_input, h_input):
         model = keras.Sequential()
@@ -37,7 +39,7 @@ class brain:
         #model.add(keras.layers.Dense(64, activation='relu'))
         # output
         model.add(keras.layers.Dense(4, activation='softmax'))
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=keras.optimizers.Adam(self.learning_rate), loss='categorical_crossentropy', metrics=['accuracy'])
 
         model.summary()
         return model

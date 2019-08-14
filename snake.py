@@ -51,9 +51,9 @@ class snake:
 		return False
 
 	def create_food(self):
-		result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
+		result = vec2(randint(0,self.cols-1) * self.gs, (randint(0, self.rows-1) * self.gs) + self.top_padding)
 		while self.in_body(result, self.body):
-			result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
+			result = vec2(randint(0,self.cols-1) * self.gs, (randint(0, self.rows-1) * self.gs) + self.top_padding)
 
 		print("new food at: ", result)
 		return result
