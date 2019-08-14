@@ -21,7 +21,7 @@ class brain:
         self.rand_thresh = 5
         self.model = self.create_model(w, h)
         self.memory = []
-        self.mini_batch_size = 250
+        self.mini_batch_size = 50
 
     def create_model(self, w_input, h_input):
         model = keras.Sequential()
@@ -32,9 +32,9 @@ class brain:
         model.add(keras.layers.Flatten())
         # fully connected
         model.add(keras.layers.Dense(128, activation='relu'))
-        model.add(keras.layers.BatchNormalization(axis=-1))
+        #model.add(keras.layers.BatchNormalization(axis=-1))
         model.add(keras.layers.Dropout(0.2))
-        model.add(keras.layers.Dense(64, activation='relu'))
+        #model.add(keras.layers.Dense(64, activation='relu'))
         # output
         model.add(keras.layers.Dense(4, activation='softmax'))
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])

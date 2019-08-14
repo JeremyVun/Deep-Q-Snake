@@ -1,14 +1,16 @@
 import pygame
 import time
-from snake import snake
-from brain import brain
+from threading import Thread
 
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+from snake import snake
+from brain import brain
 
-def init_game(w, h, w_input, h_input):
+
+def init_game(w, h, w_input, h_input, load = True):
     pygame.init()
     pygame.font.init()
     pygame.display.set_caption("snake ai")
@@ -16,7 +18,8 @@ def init_game(w, h, w_input, h_input):
     screen = pygame.display.set_mode((w, h))
     game = snake(w, h)
     game_brain = brain(w_input, h_input)
-    game_brain.load()
+    if load:
+        game_brain.load()
 
     return screen, game, game_brain
 
@@ -33,6 +36,8 @@ def preprocess(state, w, h, top_padding, w_input, h_input):
     state = state[top_padding:h, 0:w]  # crop
     state = cv2.resize(state, (w_input, h_input))  # resize
 
+    show(state)
+
     # expand dims for tensorflow model
     state = np.expand_dims(state, axis=0)
     state = np.expand_dims(state, axis=4)
@@ -41,8 +46,6 @@ def preprocess(state, w, h, top_padding, w_input, h_input):
 
 def show(state):
     cv2.imshow('image', state)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 
 def main():

@@ -54,6 +54,8 @@ class snake:
 		result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
 		while self.in_body(result, self.body):
 			result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
+
+		print("new food at: ", result)
 		return result
 
 	def eat(self):
