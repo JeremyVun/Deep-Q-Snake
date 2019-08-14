@@ -1,7 +1,6 @@
 import numpy as np
 import pygame as pg
 from random import randint
-from secrets import randbelow
 
 class vec2:
 	def __init__(self, x, y):

@@ -1,4 +1,3 @@
-import tensorflow as tf
 from tensorflow import keras
 from secrets import randbelow
 import random
@@ -20,8 +19,8 @@ class brain:
         self.discount_factor = 0.9
         self.rand_thresh = 5
         self.memory = []
-        self.mini_batch_size = 50
-        self.learning_rate = 0.0007
+        self.mini_batch_size = 250
+        self.learning_rate = 0.0006
 
         self.model = self.create_model(w, h)
 

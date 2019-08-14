@@ -1,10 +1,8 @@
 import pygame
 import time
-from threading import Thread
 
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
 from snake import snake
 from brain import brain
