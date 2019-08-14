@@ -16,6 +16,7 @@ def init_game(w, h, w_input, h_input):
     screen = pygame.display.set_mode((w, h))
     game = snake(w, h)
     game_brain = brain(w_input, h_input)
+    game_brain.load()
 
     return screen, game, game_brain
 
@@ -47,7 +48,7 @@ def show(state):
 def main():
     w = 400
     h = int(w * 1.1)
-    w_input = h_input = 100
+    w_input = h_input = 84
     screen, game, game_brain = init_game(w, h, w_input, h_input)
 
     timestep = 0
@@ -100,6 +101,7 @@ def main():
         if ended:
             game.reset(5)
             game_brain.long_memory_training()
+            game_brain.save()
 
         if timestep > 0:
             time.sleep(timestep)

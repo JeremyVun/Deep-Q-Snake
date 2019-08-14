@@ -79,9 +79,11 @@ class brain:
 
     def save(self):
         self.model.save_weights(self.cp_path)
+        print("model saved")
 
     def load(self):
         self.model.load_weights(self.cp_path)
+        print("model loaded")
 
     def summary(self):
         self.model.summary()
