@@ -20,7 +20,7 @@ class brain:
         self.rand_thresh = 5
         self.memory = []
         self.mini_batch_size = 100
-        self.learning_rate = 0.0006
+        self.learning_rate = 0.0008
 
         self.model = self.create_model(w, h)
 
@@ -28,11 +28,11 @@ class brain:
         model = keras.Sequential()
 
         # convolutions
-        model.add(keras.layers.Conv2D(12, (8, 8), strides=(4, 4), activation='relu', input_shape=(w_input, h_input, 1)))
-        model.add(keras.layers.Conv2D(18, (4, 4), strides=(2, 2), activation='relu'))  # inbuilt pooling
+        model.add(keras.layers.Conv2D(9, (8, 8), strides=(4, 4), activation='relu', input_shape=(w_input, h_input, 1)))
+        model.add(keras.layers.Conv2D(16, (4, 4), strides=(2, 2), activation='relu'))  # inbuilt pooling
         model.add(keras.layers.Flatten())
         # fully connected
-        model.add(keras.layers.Dense(128, activation='relu'))
+        model.add(keras.layers.Dense(96, activation='relu'))
         #model.add(keras.layers.BatchNormalization(axis=-1))
         model.add(keras.layers.Dropout(0.2))
         #model.add(keras.layers.Dense(64, activation='relu'))
@@ -67,8 +67,8 @@ class brain:
         self.model.fit(state_a, actual_q, epochs=5, verbose=v_opt)
 
     def short_memory_training(self, state_a, action, reward, state_b, ended, force = False):
-        if reward > 0 or force:
-            self.train(state_a, action, reward, state_b, ended)
+        #if reward > 0 or force:
+        self.train(state_a, action, reward, state_b, ended)
 
     def long_memory_training(self):
         # train on random minibatch
