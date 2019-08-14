@@ -1,39 +1,91 @@
 import tensorflow as tf
 from tensorflow import keras
+from secrets import randbelow
+import random
 import numpy as np
-import matplotlib.pyplot as plt
 
-import os
+
+# - bellman function to calc loss and fit model. q(s,a) = r + y * max(q(s',a'))
+# - state, action, reward, state'
+# - state -> model -> q value per action
 
 class brain:
-    def __init__(self):
-        self.model = self.create_model()
-        self.memory = []
+    def __init__(self, w, h):
+        self.cp_path = 'saved_weights.h5'
+        # cp_dir = os.path.dirname(cp_path)
+        # print("cp_dir: ", cp_dir)
+        self.cp_callback = keras.callbacks.ModelCheckpoint(self.cp_path, save_weights_only=True, verbose=0)
 
-    def create_model(self):
+        self.reward_multi = 5
+        self.discount_factor = 0.9
+        self.rand_thresh = 5
+        self.model = self.create_model(w, h)
+        self.memory = []
+        self.mini_batch_size = 250
+
+    def create_model(self, w_input, h_input):
         model = keras.Sequential()
 
-        #problem with this line
-        model.add(keras.layers.Dense(512, activation='relu', input_shape=(784,)))
-
+        # convolutions
+        model.add(keras.layers.Conv2D(12, (8, 8), strides=(4, 4), activation='relu', input_shape=(w_input, h_input, 1)))
+        model.add(keras.layers.Conv2D(18, (4, 4), strides=(2, 2), activation='relu'))  # inbuilt pooling
+        model.add(keras.layers.Flatten())
+        # fully connected
+        model.add(keras.layers.Dense(128, activation='relu'))
+        model.add(keras.layers.BatchNormalization(axis=-1))
         model.add(keras.layers.Dropout(0.2))
-        model.add(keras.layers.Dense(10, activation='softmax'))
-        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        model.add(keras.layers.Dense(64, activation='relu'))
+        # output
+        model.add(keras.layers.Dense(4, activation='softmax'))
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+        model.summary()
         return model
 
     def think(self, state):
-        print("brain thinking")
-        return 0
+        if randbelow(10) > self.rand_thresh:
+            return randbelow(4)
+        else:
+            return np.argmax(self.model.predict(state))
 
     def remember(self, state_a, action, reward, state_b, ended):
-        print("brain remember")
         self.memory.append((state_a, action, reward, state_b, ended))
 
+    def train(self, state_a, action, reward, state_b, ended, v_opt=0):
+        #scale reward
+        reward = reward * self.reward_multi
+        # inject new information about uncovered rewards
+        if not ended:
+            reward = reward + self.discount_factor * np.amax(self.model.predict(state_b))
+
+        # fit action value function to new q values
+        actual_q = self.model.predict(state_a)
+        actual_q[0][action] = reward
+        self.model.fit(state_a, actual_q, epochs=5, verbose=v_opt)
+
     def short_memory_training(self, state_a, action, reward, state_b, ended):
-        print("brain short memory training")
+        if (reward > 0):
+            print("reward found!")
+            self.train(state_a, action, reward, state_b, ended)
 
     def long_memory_training(self):
-        print("brain long replay training")
+        # train on random minibatch
+        minibatch = random.sample(self.memory, min(len(self.memory), self.mini_batch_size))
+
+        print("training minibatch: ", self.mini_batch_size)
+        for sample in minibatch:
+            # self.memory.append((state_a, action, reward, state_b, ended))
+            self.train(sample[0], sample[1], sample[2], sample[3], sample[4], 0)
+
+    def save(self):
+        self.model.save_weights(self.cp_path)
+
+    def load(self):
+        self.model.load_weights(self.cp_path)
+
+    def summary(self):
+        self.model.summary()
+
 
 '''
 def draw():
@@ -47,31 +99,4 @@ def draw():
         plt.yticks([])
 
     plt.show()
-
-fashion_mnist = keras.datasets.fashion_mnist
-(train_img, train_label), (test_img, test_label) = fashion_mnist.load_data()
-
-#labels
-class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-
-#flatten
-train_img = train_img.reshape(-1,28*28) / 255.0
-test_img = test_img.reshape(-1,28*28) / 255.0
-
-#checkpoint
-cp_path = "hello.ckpt"
-cp_dir = os.path.dirname(cp_path)
-print("cp_dir: ", cp_dir)
-
-cp_callback = keras.callbacks.ModelCheckpoint(cp_path, save_weights_only=True, verbose=1)
-
-model = create_model()
-#model.summary()
-
-#model.fit(train_img, train_label, callbacks=[cp_callback], period=1 epochs=5)
-loss_and_metrics = model.evaluate(test_img, test_label)
-
-model.load_weights(cp_path)
-loss_and_metrics = model.evaluate(test_img, test_label)
 '''

@@ -1,23 +1,5 @@
-# 1. code snake game
-# 2. expose action interface
-# 3. state output
-# 4. implement dqn agent
-# - random action based on how many games its played. more played = less random. random or use dll model
-# - do move, return new state
-# - set reward
-# - s, a, r, s'
-# - bellman function to calc loss and fit model. q(s,a) = r + ymax(q(s',a')). 
-# - Loss = reward0 + discount * prediction(next state) - prediction(current state)
-# - approximate action value function using bellman func. simulation of actual play in emulator prunes a lot of states
-# - state -> model -> q value per action
-
-# cost function
-# target - actual
-# gradient vector * -learning rate = delta v
-
 import pygame
 import time
-from secrets import randbelow
 from snake import snake
 from brain import brain
 
@@ -26,14 +8,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def init_game(w, h):
+def init_game(w, h, w_input, h_input):
     pygame.init()
     pygame.font.init()
     pygame.display.set_caption("snake ai")
 
     screen = pygame.display.set_mode((w, h))
     game = snake(w, h)
-    game_brain = brain()
+    game_brain = brain(w_input, h_input)
 
     return screen, game, game_brain
 
@@ -45,10 +27,15 @@ def update_window(screen, game):
     pygame.display.update()
 
 
-def preprocess(state, w, h, top_padding):
-    state = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY) #greyscale
-    state = state[top_padding:h, 0:w] #crop
-    return cv2.resize(state, (200, 200)) #resize
+def preprocess(state, w, h, top_padding, w_input, h_input):
+    state = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)  # greyscale
+    state = state[top_padding:h, 0:w]  # crop
+    state = cv2.resize(state, (w_input, h_input))  # resize
+
+    # expand dims for tensorflow model
+    state = np.expand_dims(state, axis=0)
+    state = np.expand_dims(state, axis=4)
+    return state
 
 
 def show(state):
@@ -60,10 +47,10 @@ def show(state):
 def main():
     w = 400
     h = int(w * 1.1)
-    screen, game, game_brain = init_game(w, h)
-    rand_thresh = 5
+    w_input = h_input = 100
+    screen, game, game_brain = init_game(w, h, w_input, h_input)
 
-    timestep = 1.0 / 5.0
+    timestep = 0
     paused = False
     running = True
 
@@ -75,11 +62,15 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 if event.key == pygame.K_UP:
-                    timestep = max(0, timestep / 1.5)
+                    timestep = max(0, timestep - 0.1)
                 if event.key == pygame.K_DOWN:
-                    timestep = timestep * 1.5
+                    timestep = timestep + 0.1
                 if event.key == pygame.K_p:
                     paused = not paused
+                if event.key == pygame.K_s:
+                    game_brain.save()
+                if event.key == pygame.K_l:
+                    game_brain.load()
 
         if paused:
             continue
@@ -87,25 +78,22 @@ def main():
         update_window(screen, game)
 
         # get state
+        # TODO - 4 state history stack
         state_a, reward = game.get_state(screen)
-        state_a = preprocess(state_a, w, h, h - w)
-        #show(state_a)
+        state_a = preprocess(state_a, w, h, h - w, w_input, h_input)
+        # show(state_a) #debug
 
         # generate action
-        if randbelow(10) > rand_thresh:
-            action = game.random_action()
-        else:
-            action = game.to_action(game_brain.think(state_a))
+        action = game_brain.think(state_a)
 
         # perform action and get new state
-        print("action: ", action)
         game.perform_action(action)
         update_window(screen, game)
         state_b, reward = game.get_state(screen)
-        state_b = preprocess(state_b, w, h, h-w)
+        state_b = preprocess(state_b, w, h, h - w, w_input, h_input)
         ended = game.is_ended()
 
-        #brain stuff
+        # brain stuff
         game_brain.short_memory_training(state_a, action, reward, state_b, ended)
         game_brain.remember(state_a, action, reward, state_b, ended)
 
@@ -113,11 +101,9 @@ def main():
             game.reset(5)
             game_brain.long_memory_training()
 
-        time.sleep(timestep)
+        if timestep > 0:
+            time.sleep(timestep)
 
-
-# - s, a, r, s'
-# - bellman function to calc loss and fit model. q(s,a) = r + ymax(q(s',a')).
 
 if __name__ == "__main__":
     main()

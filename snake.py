@@ -51,9 +51,9 @@ class snake:
 		return False
 
 	def create_food(self):
-		result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows-1) * self.gs + self.top_padding)
+		result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
 		while self.in_body(result, self.body):
-			result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows-1) * self.gs + self.top_padding)
+			result = vec2(randint(0,self.cols) * self.gs, (randint(0, self.rows) * self.gs) + self.top_padding)
 		return result
 
 	def eat(self):
@@ -96,6 +96,8 @@ class snake:
 		if self.ended:
 			return
 
+		action = self.to_action_char(action)
+
 		if action == 'L' and self.dir != vec2(1,0):
 			self.dir = vec2(-1,0)
 		elif action == 'R' and self.dir != vec2(-1,0):
@@ -127,7 +129,7 @@ class snake:
 		text = self.score_font.render(f'Score: {self.score}', False, (255, 255, 255))
 		surf.blit(text, (0, 0))
 
-	def to_action(self, x):
+	def to_action_char(self, x):
 		if x == 0:
 			return 'L'
 		elif x == 1:
@@ -136,6 +138,3 @@ class snake:
 			return 'U'
 		elif x == 3:
 			return 'D'
-
-	def random_action(self):
-		return self.to_action(randbelow(4))
