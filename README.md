@@ -6,7 +6,7 @@ Architechture
 =============
 Architechture similar to 'Playing Atari with Deep Reinforcement Learning' (2013) V Mnih, K Kavukcuoglu, D Silver et al.
 
-The game's pixels are used directly as network input. Greyscaled and downsampled to 84 x 84
+The game's pixels are used directly as network input. 400 x 400 RGB game screen greyscaled and downsampled to 84 x 84
 
 ![alt text](https://raw.githubusercontent.com/elodea/Deep-Q-Snake/master/img/processed.png)
 
