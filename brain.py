@@ -57,6 +57,8 @@ class brain:
         # inject new information about uncovered rewards
         if not ended:
             reward = reward + self.discount_factor * np.amax(self.model.predict(state_b))
+        else:
+            reward = 0
 
         # fit action value function to new q values
         actual_q = self.model.predict(state_a)
