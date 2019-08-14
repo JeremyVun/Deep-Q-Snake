@@ -51,9 +51,9 @@ class snake:
 		return False
 
 	def create_food(self):
-		result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows) * self.gs + self.top_padding)
+		result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows-1) * self.gs + self.top_padding)
 		while self.in_body(result, self.body):
-			result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows) * self.gs + self.top_padding)
+			result = vec2(randint(0,self.cols) * self.gs, randint(0, self.rows-1) * self.gs + self.top_padding)
 		return result
 
 	def eat(self):
@@ -78,9 +78,9 @@ class snake:
 		if self.head.x > (self.cols - 1) * self.gs:
 			self.head.x = 0
 		if self.head.y < self.top_padding:
-			self.head.y = (self.rows-1) * self.gs
-		if self.head.y > (self.rows - 1) * self.gs:
-			self.head.y = 0;
+			self.head.y = (self.rows-1) * self.gs + self.top_padding
+		if self.head.y > (self.rows-1) * self.gs + self.top_padding:
+			self.head.y = self.top_padding;
 
 	def update(self):
 		self.move()

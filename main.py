@@ -62,8 +62,9 @@ def main():
     h = int(w * 1.1)
     screen, game, game_brain = init_game(w, h)
     rand_thresh = 5
-    timestep = 1.0 / 5.0
 
+    timestep = 1.0 / 5.0
+    paused = False
     running = True
 
     while running:
@@ -74,9 +75,14 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 if event.key == pygame.K_UP:
-                    timestep = max(0, timestep - 0.1)
+                    timestep = max(0, timestep / 1.5)
                 if event.key == pygame.K_DOWN:
-                    timestep += 0.1
+                    timestep = timestep * 1.5
+                if event.key == pygame.K_p:
+                    paused = not paused
+
+        if paused:
+            continue
 
         update_window(screen, game)
 
