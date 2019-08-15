@@ -61,6 +61,4 @@ def queue(state, state_q, n):
 
 def read_config():
     config = configparser.ConfigParser()
-    print(config.read('config.ini'))
-    print(config.sections())
     return config['GAME'], config['BRAIN']

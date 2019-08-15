@@ -42,13 +42,19 @@ class brain:
         model = keras.Sequential()
 
         # convolutions
-        model.add(keras.layers.Conv3D(8, (1, 5, 5), strides=(1, 2, 2), activation='relu', input_shape=(self.n_frames, self.input_size, self.input_size, 1)))
-        model.add(keras.layers.Conv3D(16, (1, 3, 3), strides=(2, 2, 2), activation='relu'))  # inbuilt pooling
+        # learn features in each layer
+        model.add(keras.layers.Conv3D(16, (1, 5, 5), strides=(1, 2, 2), activation='relu', input_shape=(self.n_frames, self.input_size, self.input_size, 1)))
+        # learn features between layers
+        model.add(keras.layers.Conv3D(32, (2, 3, 3), strides=(2, 2, 2), activation='relu'))
+        # pooling
+        model.add(keras.layers.Conv3D(64, (1, 3, 3), strides=(1, 2, 2), activation='relu'))
+
         model.add(keras.layers.Flatten())
+        model.add(keras.layers.BatchNormalization(axis=-1))
+        model.add(keras.layers.Dropout(0.2))
+
         # fully connected
         model.add(keras.layers.Dense(128, activation='relu'))
-        #model.add(keras.layers.BatchNormalization(axis=-1))
-        #model.add(keras.layers.Dropout(0.2))
         #model.add(keras.layers.Dense(64, activation='relu'))
         # output
         model.add(keras.layers.Dense(4, activation='softmax'))
