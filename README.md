@@ -32,4 +32,4 @@ See config.ini
 
 Dependencies
 ===============
-Keras, CV2, Numpy, matplotlib
+Keras, CV2, Numpy, matplotlib, configparser
