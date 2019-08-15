@@ -15,12 +15,14 @@ class brain:
         # print("cp_dir: ", cp_dir)
         self.cp_callback = keras.callbacks.ModelCheckpoint(self.cp_path, save_weights_only=True, verbose=0)
 
-        self.reward_multi = 5
         self.discount_factor = 0.9
-        self.rand_thresh = 5
+        self.rand_thresh = 7.0
         self.memory = []
-        self.mini_batch_size = 100
-        self.learning_rate = 0.0008
+        self.memory_max = 5000
+        self.mini_batch_size = 1000
+        self.learning_rate = 0.001
+
+        self.round = 0
 
         self.model = self.create_model(w, h)
 
@@ -44,17 +46,17 @@ class brain:
         return model
 
     def think(self, state):
-        if randbelow(10) > self.rand_thresh:
+        if randbelow(10) < self.rand_thresh:
             return randbelow(4)
         else:
             return np.argmax(self.model.predict(state))
 
     def remember(self, state_a, action, reward, state_b, ended):
+        if len(self.memory) > self.memory_max:
+            self.memory = []
         self.memory.append((state_a, action, reward, state_b, ended))
 
     def train(self, state_a, action, reward, state_b, ended, v_opt=0):
-        #scale reward
-        reward = reward * self.reward_multi
         # inject new information about uncovered rewards
         if not ended:
             reward = reward + self.discount_factor * np.amax(self.model.predict(state_b))
@@ -64,7 +66,7 @@ class brain:
         # fit action value function to new q values
         actual_q = self.model.predict(state_a)
         actual_q[0][action] = reward
-        self.model.fit(state_a, actual_q, epochs=5, verbose=v_opt)
+        self.model.fit(state_a, actual_q, epochs=1, verbose=v_opt)
 
     def short_memory_training(self, state_a, action, reward, state_b, ended, force = False):
         #if reward > 0 or force:
@@ -74,14 +76,14 @@ class brain:
         # train on random minibatch
         minibatch = random.sample(self.memory, min(len(self.memory), self.mini_batch_size))
 
-        print("training minibatch: ", self.mini_batch_size)
+        self.rand_thresh = self.rand_thresh * 0.985
         for sample in minibatch:
             # self.memory.append((state_a, action, reward, state_b, ended))
             self.train(sample[0], sample[1], sample[2], sample[3], sample[4], 0)
 
     def save(self):
         self.model.save_weights(self.cp_path)
-        print("model saved")
+        #print("model saved")
 
     def load(self):
         self.model.load_weights(self.cp_path)

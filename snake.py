@@ -26,6 +26,8 @@ class snake:
 		self.top_padding = h-w
 		self.gs = (h-self.top_padding)/self.cols
 
+		self.round = 0
+
 		self.score_font = pg.font.SysFont('Arial', int(self.top_padding * 0.7))
 		self.reset(5)
 
@@ -71,6 +73,7 @@ class snake:
 		self.body.append(vec2(self.head.x, self.head.y))
 		self.head.add(self.gs * self.dir.x, self.gs * self.dir.y)
 		self.wrap()
+		self.delta_score -= 0.1
 
 	def wrap(self):
 		if self.head.x < 0:
@@ -88,9 +91,10 @@ class snake:
 		if (self.food == self.head):
 			self.eat()
 			self.score += 1
-			self.delta_score += 1
+			self.delta_score += 5
 		elif self.collided():
 			self.ended = True
+			self.round += 1
 		
 	def perform_action(self, action):
 		if self.ended:

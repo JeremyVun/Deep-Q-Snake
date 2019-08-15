@@ -100,6 +100,7 @@ def main():
         game_brain.remember(state_a, action, reward, state_b, ended)
 
         if ended:
+            print(f"Round {game.round} | Score: {game.score} | Replay batch: {game_brain.mini_batch_size} | rand_thresh: {game_brain.rand_thresh}")
             game.reset(5)
             game_brain.short_memory_training(state_a, action, reward, state_b, ended, True)
             game_brain.long_memory_training()
