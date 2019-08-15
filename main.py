@@ -77,7 +77,7 @@ def main():
         if ended:
             print(f"Round {game.round} | Score: {game.score} | Replay batch: {game_brain.mini_batch_size} | rand_thresh: {game_brain.rand_thresh}")
             game.reset()
-            game_brain.short_memory_training(state_a, action, reward, state_b, ended, True)
+            game_brain.short_memory_training(state_a, action, reward, state_b, ended)
             game_brain.long_memory_training()
             game_brain.save()
             frame_hist = deque([])

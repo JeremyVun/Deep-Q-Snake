@@ -137,11 +137,11 @@ class snake:
 		return pixels, reward
 
 	def draw(self, surf):
-		pygame.draw.rect(surf,(50,255,50),(self.food.x+1, self.food.y+1,self.gs-2,self.gs-2)) # food
-		pygame.draw.rect(surf,(200,20,200),(self.head.x+1,self.head.y+1,self.gs-2,self.gs-2)) # head
+		pygame.draw.rect(surf,(150,255,150),(self.food.x+1, self.food.y+1,self.gs-2,self.gs-2)) # food
+		pygame.draw.rect(surf,(230,50,200),(self.head.x+1,self.head.y+1,self.gs-2,self.gs-2)) # head
 
 		for v in self.body:
-			pygame.draw.rect(surf,(200,0,0),(v.x+1,v.y+1,self.gs-2,self.gs-2)) # body
+			pygame.draw.rect(surf,(220,20,20),(v.x+1,v.y+1,self.gs-2,self.gs-2)) # body
 
 		#UI
 		pygame.draw.line(surf,(255,255,255,),(0,self.top_padding),(self.w,self.top_padding))

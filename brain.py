@@ -2,7 +2,7 @@ from tensorflow import keras
 from secrets import randbelow
 import random
 import numpy as np
-
+import time
 
 # - bellman function to calc loss and fit model. q(s,a) = r + y * max(q(s',a'))
 # - state, action, reward, state'
@@ -32,6 +32,7 @@ class brain:
 
         self.input_size = int(conf_b['input_size'])
         self.n_frames = int(conf_b['frame_buffer'])
+        self.verbose = int(conf_b['verbose'])
 
         self.round = 0
 
@@ -41,8 +42,8 @@ class brain:
         model = keras.Sequential()
 
         # convolutions
-        model.add(keras.layers.Conv2D(8, (5, 5), strides=(2, 2), activation='relu', input_shape=(self.input_size, self.input_size, self.n_frames)))
-        model.add(keras.layers.Conv2D(16, (3, 3), strides=(2, 2), activation='relu'))  # inbuilt pooling
+        model.add(keras.layers.Conv3D(8, (1, 5, 5), strides=(1, 2, 2), activation='relu', input_shape=(self.n_frames, self.input_size, self.input_size, 1)))
+        model.add(keras.layers.Conv3D(16, (1, 3, 3), strides=(2, 2, 2), activation='relu'))  # inbuilt pooling
         model.add(keras.layers.Flatten())
         # fully connected
         model.add(keras.layers.Dense(128, activation='relu'))
@@ -67,15 +68,17 @@ class brain:
             self.memory = []
         self.memory.append((state_a, action, reward, state_b, ended))
 
-    def train(self, state_a, action, reward, state_b, ended, v_opt=0):
+    def train(self, state_a, action, reward, state_b, ended):
+        a_q = self.model.predict(state_a)
+        b_q = self.model.predict(state_b)
+
         # inject new information about uncovered rewards
         if not ended:
-            reward = reward + self.discount_factor * np.amax(self.model.predict(state_b))
+            reward = reward + self.discount_factor * np.amax(b_q)
 
         # fit action value function to new q values
-        actual_q = self.model.predict(state_a)
-        actual_q[0][action] = reward
-        self.model.fit(state_a, actual_q, epochs=1, verbose=v_opt)
+        a_q[0][action] = reward
+        self.model.fit(state_a, a_q, epochs=1, verbose=self.verbose)
 
     def short_memory_training(self, state_a, action, reward, state_b, ended):
         self.train(state_a, action, reward, state_b, ended)
@@ -87,7 +90,7 @@ class brain:
         self.rand_thresh = self.rand_thresh * 0.985
         for sample in minibatch:
             # self.memory.append((state_a, action, reward, state_b, ended))
-            self.train(sample[0], sample[1], sample[2], sample[3], sample[4], 0)
+            self.train(sample[0], sample[1], sample[2], sample[3], sample[4])
 
     def save(self):
         self.model.save_weights(self.cp_path)
