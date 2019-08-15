@@ -29,3 +29,7 @@ Replay Training
 Config
 ===============
 See config.ini
+
+Dependencies
+===============
+Tensorflow, Keras, Numpy, matplotlib
