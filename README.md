@@ -32,4 +32,4 @@ See config.ini
 
 Dependencies
 ===============
-Tensorflow, Keras, Numpy, matplotlib
+Keras, CV2, Numpy, matplotlib
