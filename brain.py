@@ -8,35 +8,46 @@ import numpy as np
 # - state, action, reward, state'
 # - state -> model -> q value per action
 
-class brain:
-    def __init__(self, w, h):
-        self.cp_path = 'saved_weights.h5'
-        # cp_dir = os.path.dirname(cp_path)
-        # print("cp_dir: ", cp_dir)
-        self.cp_callback = keras.callbacks.ModelCheckpoint(self.cp_path, save_weights_only=True, verbose=0)
+def create_brain(conf_b):
+    result = brain(conf_b)
+    if int(conf_b['autoload']) == 1:
+        try:
+            result.load()
+        except:
+            result.save()
 
-        self.discount_factor = 0.9
-        self.rand_thresh = 7.0
+    return result
+
+class brain:
+    def __init__(self, conf_b):
+        self.cp_path = conf_b['save_filename']
+        self.cp_callback = keras.callbacks.ModelCheckpoint(self.cp_path, verbose=0)
+
+        self.discount_factor = float(conf_b['discount_factor'])
+        self.rand_thresh = float(conf_b['random_action_thresh'])
         self.memory = []
-        self.memory_max = 5000
-        self.mini_batch_size = 1000
-        self.learning_rate = 0.001
+        self.memory_max = int(conf_b['memory_buffer'])
+        self.mini_batch_size = int(conf_b['minibatch_size'])
+        self.learning_rate = float(conf_b['learning_rate'])
+
+        self.input_size = int(conf_b['input_size'])
+        self.n_frames = int(conf_b['frame_buffer'])
 
         self.round = 0
 
-        self.model = self.create_model(w, h)
+        self.model = self.create_model()
 
-    def create_model(self, w_input, h_input):
+    def create_model(self):
         model = keras.Sequential()
 
         # convolutions
-        model.add(keras.layers.Conv2D(9, (8, 8), strides=(4, 4), activation='relu', input_shape=(w_input, h_input, 1)))
-        model.add(keras.layers.Conv2D(16, (4, 4), strides=(2, 2), activation='relu'))  # inbuilt pooling
+        model.add(keras.layers.Conv2D(8, (5, 5), strides=(2, 2), activation='relu', input_shape=(self.input_size, self.input_size, self.n_frames)))
+        model.add(keras.layers.Conv2D(16, (3, 3), strides=(2, 2), activation='relu'))  # inbuilt pooling
         model.add(keras.layers.Flatten())
         # fully connected
-        model.add(keras.layers.Dense(96, activation='relu'))
+        model.add(keras.layers.Dense(128, activation='relu'))
         #model.add(keras.layers.BatchNormalization(axis=-1))
-        model.add(keras.layers.Dropout(0.2))
+        #model.add(keras.layers.Dropout(0.2))
         #model.add(keras.layers.Dense(64, activation='relu'))
         # output
         model.add(keras.layers.Dense(4, activation='softmax'))
@@ -60,16 +71,13 @@ class brain:
         # inject new information about uncovered rewards
         if not ended:
             reward = reward + self.discount_factor * np.amax(self.model.predict(state_b))
-        else:
-            reward = 0
 
         # fit action value function to new q values
         actual_q = self.model.predict(state_a)
         actual_q[0][action] = reward
         self.model.fit(state_a, actual_q, epochs=1, verbose=v_opt)
 
-    def short_memory_training(self, state_a, action, reward, state_b, ended, force = False):
-        #if reward > 0 or force:
+    def short_memory_training(self, state_a, action, reward, state_b, ended):
         self.train(state_a, action, reward, state_b, ended)
 
     def long_memory_training(self):
@@ -91,18 +99,3 @@ class brain:
 
     def summary(self):
         self.model.summary()
-
-
-'''
-def draw():
-    plt.figure(figsize=(6,6))
-    for i in range(25):
-        plt.subplot(5, 5, i+1) #select subplot
-        plt.imshow(train_img[i], cmap=plt.cm.binary)
-        plt.xlabel(class_names[train_label[i]])
-        plt.grid(False)
-        plt.xticks([])
-        plt.yticks([])
-
-    plt.show()
-'''

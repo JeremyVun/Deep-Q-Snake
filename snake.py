@@ -1,5 +1,5 @@
 import numpy as np
-import pygame as pg
+import pygame
 from random import randint
 
 class vec2:
@@ -17,25 +17,39 @@ class vec2:
 	def __eq__(self, other):
 		return self.x == other.x and self.y == other.y
 
+def create_game(w, h, conf_g):
+	pygame.init()
+	pygame.font.init()
+	pygame.display.set_caption("snake ai")
+
+	screen = pygame.display.set_mode((w, h))
+	game = snake(w, h, conf_g)
+
+	return screen, game
+
 class snake:
-	def __init__(self, w, h):
+	def __init__(self, w, h, conf_g):
 		self.h = h
 		self.w = min(w, h)
-		self.cols = 20
-		self.rows = 20
+		self.cols = int(conf_g['cols'])
+		self.rows = int(conf_g['rows'])
 		self.top_padding = h-w
 		self.gs = (h-self.top_padding)/self.cols
 
 		self.round = 0
+		self.food_reward = float(conf_g['food_reward'])
+		self.death_penalty = float(conf_g['death_penalty'])
+		self.movement_penalty = float(conf_g['movement_penalty'])
+		self.tail_size = int(conf_g['tail_size'])
 
-		self.score_font = pg.font.SysFont('Arial', int(self.top_padding * 0.7))
-		self.reset(5)
+		self.score_font = pygame.font.SysFont('Arial', int(self.top_padding * 0.7))
+		self.reset()
 
-	def reset(self, size):
+	def reset(self):
 		self.dir = vec2(0,-1)
 		self.head = vec2(self.cols / 2 * self.gs, (self.rows / 2 * self.gs) + self.top_padding)
-		self.body = [vec2(self.head.x, self.head.y+(self.gs*(size-1)))]
-		for i in range(1,size-1):
+		self.body = [vec2(self.head.x, self.head.y+(self.gs*(self.tail_size-1)))]
+		for i in range(1, self.tail_size-1):
 			self.body.append(vec2(self.body[i-1].x, self.body[i-1].y-self.gs))
 		self.food = self.create_food()
 		self.score = 0
@@ -73,7 +87,7 @@ class snake:
 		self.body.append(vec2(self.head.x, self.head.y))
 		self.head.add(self.gs * self.dir.x, self.gs * self.dir.y)
 		self.wrap()
-		self.delta_score -= 0.1
+		self.delta_score -= self.movement_penalty
 
 	def wrap(self):
 		if self.head.x < 0:
@@ -91,10 +105,11 @@ class snake:
 		if (self.food == self.head):
 			self.eat()
 			self.score += 1
-			self.delta_score += 5
+			self.delta_score += self.food_reward
 		elif self.collided():
 			self.ended = True
 			self.round += 1
+			self.delta_score = self.death_penalty
 		
 	def perform_action(self, action):
 		if self.ended:
@@ -114,7 +129,7 @@ class snake:
 		self.update()
 
 	def get_state(self, screen):
-		pixels = pg.surfarray.array3d(screen)
+		pixels = pygame.surfarray.array3d(screen)
 		pixels = np.fliplr(np.flip(np.rot90(pixels)))
 		reward = self.delta_score
 		self.delta_score = 0
@@ -122,14 +137,14 @@ class snake:
 		return pixels, reward
 
 	def draw(self, surf):
-		pg.draw.rect(surf,(50,255,50),(self.food.x+1, self.food.y+1,self.gs-2,self.gs-2)) # food
-		pg.draw.rect(surf,(200,20,200),(self.head.x+1,self.head.y+1,self.gs-2,self.gs-2)) # head
+		pygame.draw.rect(surf,(50,255,50),(self.food.x+1, self.food.y+1,self.gs-2,self.gs-2)) # food
+		pygame.draw.rect(surf,(200,20,200),(self.head.x+1,self.head.y+1,self.gs-2,self.gs-2)) # head
 
 		for v in self.body:
-			pg.draw.rect(surf,(200,0,0),(v.x+1,v.y+1,self.gs-2,self.gs-2)) # body
+			pygame.draw.rect(surf,(200,0,0),(v.x+1,v.y+1,self.gs-2,self.gs-2)) # body
 
 		#UI
-		pg.draw.line(surf,(255,255,255,),(0,self.top_padding),(self.w,self.top_padding))
+		pygame.draw.line(surf,(255,255,255,),(0,self.top_padding),(self.w,self.top_padding))
 		text = self.score_font.render(f'Score: {self.score}', False, (255, 255, 255))
 		surf.blit(text, (0, 0))
 

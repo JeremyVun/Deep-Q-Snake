@@ -1,58 +1,26 @@
-import pygame
+from collections import deque
 import time
 
-import cv2
-import numpy as np
-
-from snake import snake
-from brain import brain
-
-
-def init_game(w, h, w_input, h_input, load = True):
-    pygame.init()
-    pygame.font.init()
-    pygame.display.set_caption("snake ai")
-
-    screen = pygame.display.set_mode((w, h))
-    game = snake(w, h)
-    game_brain = brain(w_input, h_input)
-    if load:
-        game_brain.load()
-
-    return screen, game, game_brain
-
-
-def update_window(screen, game):
-    screen.fill((0, 0, 0))
-    game.draw(screen)
-
-    pygame.display.update()
-
-
-def preprocess(state, w, h, top_padding, w_input, h_input):
-    state = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)  # greyscale
-    state = state[top_padding:h, 0:w]  # crop
-    state = cv2.resize(state, (w_input, h_input))  # resize
-
-    show(state)
-
-    # expand dims for tensorflow model
-    state = np.expand_dims(state, axis=0)
-    state = np.expand_dims(state, axis=4)
-    return state
-
-
-def show(state):
-    cv2.imshow('image', state)
+from snake import create_game
+from brain import create_brain
+from util import *
 
 
 def main():
-    w = 400
+    # config
+    conf_g, conf_b = read_config()
+    w = int(conf_g['window_size'])
     h = int(w * 1.1)
-    w_input = h_input = 84
-    screen, game, game_brain = init_game(w, h, w_input, h_input)
+    downsample_size = int(conf_b['input_size']) # downsample dimensions
+    n_frames = int(conf_b['frame_buffer']) # temporal degree
+    frame_hist = deque([]) # temporal frame buffer
+    game_y = h - w
 
-    timestep = 0
+    # game vars
+    screen, game = create_game(w, h, conf_g)
+    game_brain = create_brain(conf_b)
+
+    timestep = int(conf_g['timestep'])
     paused = False
     running = True
 
@@ -79,32 +47,42 @@ def main():
 
         update_window(screen, game)
 
-        # get state
-        # TODO - 4 state history stack
-        state_a, reward = game.get_state(screen)
-        state_a = preprocess(state_a, w, h, h - w, w_input, h_input)
-        # show(state_a) #debug
+        # maintain frame state stack
+        while len(frame_hist) < n_frames:
+            state, reward = game.get_state(screen)
+            state = preprocess(state, game_y, downsample_size)
+            frame_hist = queue(state, frame_hist, n_frames)
 
-        # generate action
+        state_a = pack(frame_hist)
+        show(frame_hist)
+
         action = game_brain.think(state_a)
-
-        # perform action and get new state
         game.perform_action(action)
+
+        #get action result
         update_window(screen, game)
-        state_b, reward = game.get_state(screen)
-        state_b = preprocess(state_b, w, h, h - w, w_input, h_input)
+        state, reward = game.get_state(screen)
+        state = preprocess(state, game_y, downsample_size)
+
+        frame_hist.popleft()
+        frame_hist = queue(state, frame_hist, n_frames)
+
+        state_b = pack(frame_hist)
+        show(frame_hist)
         ended = game.is_ended()
 
         # brain stuff
-        game_brain.short_memory_training(state_a, action, reward, state_b, ended)
         game_brain.remember(state_a, action, reward, state_b, ended)
 
         if ended:
             print(f"Round {game.round} | Score: {game.score} | Replay batch: {game_brain.mini_batch_size} | rand_thresh: {game_brain.rand_thresh}")
-            game.reset(5)
+            game.reset()
             game_brain.short_memory_training(state_a, action, reward, state_b, ended, True)
             game_brain.long_memory_training()
             game_brain.save()
+            frame_hist = deque([])
+        else:
+            game_brain.short_memory_training(state_a, action, reward, state_b, ended)
 
         if timestep > 0:
             time.sleep(timestep)
