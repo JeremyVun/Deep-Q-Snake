@@ -27,8 +27,21 @@ def create_game(w, h, conf_g):
 
 	return screen, game
 
-class snake:
+class game:
+	def __init__(self):
+		self.round = 0
+		self.score = 0
+
+	def get_score(self):
+		return self.score
+
+	def get_round(self):
+		return self.round
+
+class snake(game):
 	def __init__(self, w, h, conf_g):
+		super(snake, self).__init__()
+
 		self.h = h
 		self.w = min(w, h)
 		self.cols = int(conf_g['cols'])
@@ -42,6 +55,7 @@ class snake:
 		self.movement_penalty = float(conf_g['movement_penalty'])
 		self.tail_size = int(conf_g['tail_size'])
 
+		self.action_bindings = ['L', 'R', 'U', 'D']
 		self.score_font = pygame.font.SysFont('Arial', int(self.top_padding * 0.7))
 		self.reset()
 
@@ -59,15 +73,9 @@ class snake:
 	def is_ended(self):
 		return self.ended
 
-	def in_body(self, food, body):
-		for v in body:
-			if food == v:
-				return True
-		return False
-
 	def create_food(self):
 		result = vec2(randint(0,self.cols-1) * self.gs, (randint(0, self.rows-1) * self.gs) + self.top_padding)
-		while self.in_body(result, self.body):
+		while self.collided(result):
 			result = vec2(randint(0,self.cols-1) * self.gs, (randint(0, self.rows-1) * self.gs) + self.top_padding)
 
 		return result
@@ -76,9 +84,9 @@ class snake:
 		self.body.insert(0,vec2(self.body[0].x, self.body[0].y))
 		self.food = self.create_food()
 
-	def collided(self):
+	def collided(self, pos):
 		for v in self.body:
-			if (self.head == v):
+			if (pos == v):
 				return True
 		return False
 
@@ -106,7 +114,7 @@ class snake:
 			self.eat()
 			self.score += 1
 			self.delta_score += self.food_reward
-		elif self.collided():
+		elif self.collided(self.head):
 			self.ended = True
 			self.round += 1
 			self.delta_score = self.death_penalty
@@ -115,7 +123,7 @@ class snake:
 		if self.ended:
 			return
 
-		action = self.to_action_char(action)
+		action = self.action_bindings[action]
 
 		if action == 'L' and self.dir != vec2(1,0):
 			self.dir = vec2(-1,0)
@@ -147,13 +155,3 @@ class snake:
 		pygame.draw.line(surf,(255,255,255,),(0,self.top_padding),(self.w,self.top_padding))
 		text = self.score_font.render(f'Score: {self.score}', False, (255, 255, 255))
 		surf.blit(text, (0, 0))
-
-	def to_action_char(self, x):
-		if x == 0:
-			return 'L'
-		elif x == 1:
-			return 'R'
-		elif x == 2:
-			return 'U'
-		elif x == 3:
-			return 'D'

@@ -7,12 +7,11 @@ import configparser
 def update_window(screen, game):
     screen.fill((0, 0, 0))
     game.draw(screen)
-
     pygame.display.update()
 
 
 def pack(frame_hist, j = 0, expand = True):
-    # (1, frames, dim, dim, 1)
+    # shape is (batch_size, frames_per_input, w, h, channels)
     if expand:
         result = np.expand_dims(frame_hist[0], axis=j)
     else:
@@ -45,11 +44,6 @@ def preprocess(state, y_start, downsample_size):
 def show(frame_hist):
     frame = pack(frame_hist, 1, False)
     cv2.imshow('image', frame)
-
-
-def debug_show(state):
-    cv2.imshow('image', state)
-    cv2.waitKey(0)
 
 
 def queue(state, state_q, n):
